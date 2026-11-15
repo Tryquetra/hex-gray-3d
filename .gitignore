@@ -1,0 +1,4 @@
+node_modules/
+fpga/build/
+fpga/bench/out/
+abc.history

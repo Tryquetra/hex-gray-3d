@@ -1,0 +1,14 @@
+{
+  "name": "hex-gray-3d",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build src/app.js --format=iife --minify --outfile=dist/bundle.js",
+    "dev": "bun run build && bun server.js",
+    "start": "bun server.js"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  }
+}

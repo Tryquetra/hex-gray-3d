@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Código Rotacional de Gray Hexagonal (q+r+s=0 em 3 bits) | Three.js</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080c15;
+      --panel: rgba(13, 19, 32, 0.88);
+      --border: rgba(148, 163, 184, 0.22);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --gold: #dca93e;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --fault: #ff4d6d;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #viewport {
+      position: absolute;
+      inset: 0;
+    }
+
+    .hud-top {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .hud-top h1 {
+      margin: 0;
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .telemetry {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .telemetry strong {
+      color: var(--gold);
+    }
+
+    .hud-bottom {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: grid;
+      grid-template-columns: 1.15fr 1.35fr 1fr;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    @media (max-width: 1080px) {
+      .hud-bottom {
+        grid-template-columns: 1fr;
+        max-height: 30vh;
+        overflow-y: auto;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+
+    .card h2 {
+      margin: 0 0 8px 0;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    button {
+      appearance: none;
+      min-block-size: 32px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(30, 41, 59, 0.86);
+      color: #f1f5f9;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 150ms ease-out;
+    }
+
+    button:hover {
+      background: rgba(51, 65, 85, 0.96);
+      border-color: rgba(226, 232, 240, 0.58);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button:focus-visible {
+      outline: 2px solid #facc15;
+      outline-offset: 2px;
+    }
+
+    button[aria-pressed="true"] {
+      background: rgba(220, 169, 62, 0.24);
+      border-color: var(--gold);
+      color: #fef08a;
+    }
+
+    button.btn-fault[aria-pressed="true"] {
+      background: rgba(255, 77, 109, 0.24);
+      border-color: var(--fault);
+      color: #fecdd3;
+    }
+
+    button.btn-auto[aria-pressed="true"] {
+      background: rgba(56, 189, 248, 0.24);
+      border-color: var(--cyan);
+      color: #bae6fd;
+    }
+
+    .diag {
+      margin: 0 0 8px 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.79rem;
+      line-height: 1.42;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.75);
+    }
+
+    .diag.is-ring {
+      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(12, 74, 110, 0.28);
+    }
+
+    .diag.is-center {
+      border-color: rgba(52, 211, 153, 0.45);
+      background: rgba(6, 78, 59, 0.28);
+    }
+
+    .diag.is-sentinel {
+      border-color: rgba(255, 77, 109, 0.65);
+      background: rgba(127, 29, 29, 0.36);
+    }
+
+    pre.lut {
+      margin: 0;
+      padding: 7px 9px;
+      border-radius: 8px;
+      background: rgba(2, 6, 23, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.72rem;
+      color: #bae6fd;
+      overflow-x: auto;
+    }
+
+    .hint {
+      margin: 6px 0 0 0;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="viewport" aria-label="Visualização 3D do Código Rotacional de Gray Hexagonal em 3 bits"></div>
+
+    <header class="hud-top">
+      <h1>Código Rotacional de Gray Hexagonal (q + r + s = 0 em 3 bits, 87,5% de eficiência)</h1>
+      <div class="telemetry">
+        <span>Código 3b: <strong id="code-readout">3'b001</strong></span>
+        <span>Vetor (q,r,s): <strong id="qrs-readout">(+1, 0, -1)</strong></span>
+        <span>Último delta: <strong id="delta-readout">0 bits</strong></span>
+      </div>
+    </header>
+
+    <aside class="hud-bottom" aria-label="Controles de passos hexagonais, códigos do cubo Q3 e telemetria LUT4">
+      <div class="card">
+        <h2>1. Passo Rotacional (+60° / -60°) e Cubo Q3</h2>
+        <div class="btn-row" style="margin-bottom: 6px;">
+          <button type="button" id="btn-ccw">Girar +60° (Anti-horário)</button>
+          <button type="button" id="btn-cw">Girar -60° (Horário)</button>
+          <button type="button" id="btn-auto" class="btn-auto" aria-pressed="false">Auto-órbita</button>
+        </div>
+        <div class="btn-row">
+          <button type="button" data-code="000" aria-pressed="false">3'b000 (Centro)</button>
+          <button type="button" data-code="001" aria-pressed="true">3'b001 (0°)</button>
+          <button type="button" data-code="011" aria-pressed="false">3'b011 (60°)</button>
+          <button type="button" data-code="010" aria-pressed="false">3'b010 (120°)</button>
+          <button type="button" data-code="110" aria-pressed="false">3'b110 (180°)</button>
+          <button type="button" data-code="111" aria-pressed="false">3'b111 (240°)</button>
+          <button type="button" data-code="101" aria-pressed="false">3'b101 (300°)</button>
+          <button type="button" class="btn-fault" data-code="100" aria-pressed="false">3'b100 (Sentinela)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>2. Isomorfismo Cubo 3D (Q3) e Roseta Tryte6</h2>
+        <p id="diag-live" class="diag is-ring" aria-live="polite"></p>
+        <pre id="lut-snippet" class="lut"></pre>
+      </div>
+
+      <div class="card">
+        <h2>3. Ganho sobre Codificações Binárias</h2>
+        <p class="diag" style="margin-bottom: 6px;">
+          <strong>Barramento reduzido:</strong> <code>3 fios</code> substituem <code>6 fios</code> (dual-rail) ou <code>9 fios</code> (one-hot) para as 7 direções <code>q+r+s=0</code>.
+        </p>
+        <p class="hint">Clique em qualquer vértice do cubo à esquerda ou em qualquer hexágono à direita para inspecionar a transição de Hamming.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="./dist/bundle.js"></script>
+</body>
+</html>

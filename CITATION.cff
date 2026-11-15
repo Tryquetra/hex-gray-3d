@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use Hexagonal Gray Code (hex-gray-3d), please cite it as below."
+title: "Hexagonal Gray Code (hex-gray-3d): Zero-Glitch 3-Bit Boolean Hypercube Mapping of q + r + s = 0, FPGA Synthesis, and Combinatorial Proofs"
+authors:
+  - family-names: Cassiano
+    given-names: Robson
+    orcid: "https://orcid.org/0009-0009-5188-361X"
+version: 0.1.0
+date-released: 2026-11-15
+license: MIT
+repository-code: "https://github.com/Tryquetra/hex-gray-3d"
+url: "https://github.com/Tryquetra/hex-gray-3d"
+type: software
+keywords:
+  - hexagonal-gray-code
+  - balanced-ternary
+  - boolean-hypercube
+  - clock-domain-crossing
+  - fpga-synthesis
+  - hardware-verification
+  - tang-nano-20k
