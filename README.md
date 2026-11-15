@@ -1,5 +1,7 @@
 # Hexagonal Gray Code (`hex-gray-3d`): $Q_3$ Hypercube Mapping of `q + r + s = 0` on FPGA
 
+**Live 3D Visualizer (GitHub Pages):** https://tryquetra.github.io/hex-gray-3d/
+
 Interactive 3D (Three-Dimensional) Three.js visualizer, mathematical formalization, combinatorial proofs, comparative benchmarks, and live **Sipeed Tang Nano 20K (`GW2AR-18C`)** FPGA (Field-Programmable Gate Array, a reconfigurable digital integrated circuit) implementation mapping the 7-state balanced ternary hexagon (`q + r + s = 0`) plus fault Sentinel onto a 3-bit Boolean hypercube $Q_3$.
 
 ---
