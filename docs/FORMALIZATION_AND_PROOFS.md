@@ -127,3 +127,26 @@ All four encodings implement identical 7-state ring and multi-step phase semanti
 ### 3.3 Architectural Tradeoff Summary
 1. **Ring Control, Motor Commutation, Mesh Routing, and `CDC` Buses**: `hex_gray3` ties `bin3` for minimum FPGA area (`609 LUT4`, `385 DFF` at 64 lanes) and reaches `180.12 MHz`, cuts dynamic bit switching by **50%** (`1.0` bit/step vs `2.0` for `bin3`/`onehot7` and `3.0` for `trit2b`), and eliminates **100%** of cross-clock torn words under propagation skew.
 2. **Multi-Step Phase Arithmetic (`delta in {-2..+2}`)**: Translating Gray back to binary index and re-encoding adds `18%` `LUT4` overhead (`2,660` vs `2,253`) and lowers $F_{\max}$ by `~7%` (`132.87 MHz` vs `142.61 MHz`) relative to natural `bin3`, while keeping lower register toggle activity (`1.30` vs `1.50`) and outperforming uncompressed 6-bit `trit2b` in both area (`37%` fewer `LUT4`) and frequency (`+30.7%`).
+
+---
+
+## 4. Literature Precedents, Novelty Boundary, and Target Applications
+
+### 4.1 Historical Lineage and Precedents
+* **Unit-Distance Binary Codes**: Frank Gray's 1953 patent (*Pulse Code Communication*, U.S. Patent `2,632,058`) introduced the reflected binary code for `PCM` (Pulse-Code Modulation) quantization masks to guarantee `d_H = 1` across consecutive levels.
+* **Three-Phase 6-Step Commutation and `SVPWM`**: `BLDC` (Brushless Direct Current) motors using three $120^\circ$ Hall sensors and `SVPWM` (Space Vector Pulse Width Modulation) inverter sector trackers already employ 6-state cycles on 3 bits (such as `001-011-010-110-100-101` with `000`/`111` reserved as sensor faults) to reduce switching losses and `EMI` (Electromagnetic Interference).
+* **Balanced Ternary Hexagonal Grids**: Spatial accelerators and cellular automata represent equidistant 6-neighbor topologies via cubic coordinates `(q, r, s)` constrained by `q + r + s = 0`.
+
+### 4.2 Contribution and Boundary of Novelty
+Prior hardware designs separate these domains: motor commutation tables optimize bridge driver switching without algebraic cube-coordinate semantics, while FPGA ternary and hexagonal interconnects typically encode `(q, r, s)` via uncompressed `2-bit/trit` (`6` wires) or `one-hot` (`7` to `9` wires), incurring up to `4.2x` higher `LUT4` cost and `4.2%` to `5.9%` `CDC` word tearing under wire skew.
+
+The contribution formalized and validated here is a unified **3-wire isomorphism** pairing the unit balanced ternary hexagon $\mathcal{H}_0 \cup \mathcal{H}_1$ (`q + r + s = 0`) with a maximum-length 6-cycle on $Q_3$ (`87.5%` geometric code density), preserving a 1-bit transition bridge to the null origin `3'b000` and isolating `3'b100` as an explicit fault sentinel.
+
+### 4.3 Engineering Fit Matrix
+
+| Target Application | Primary Benefit from `hex_gray3` | Recommended Baseline Choice |
+| :--- | :--- | :--- |
+| **`BLDC` / `SVPWM` 6-Sector Controllers** | Native 6-sector + null (`000`) + fault (`100`) mapping with glitch-free cross-clock reads | `hex_gray3` |
+| **Hexagonal `NoC` (Network-on-Chip) Routing** | `50%` fewer wire flips (`1.0` vs `2.0`/`3.0`), `3`-wire port width, FIFO-free clock island handoff | `hex_gray3` |
+| **Rotary Encoders & Step Telemetry (`IoT`)** | `0 ppm` torn words under routing skew up to `3.9 ns` | `hex_gray3` |
+| **Dense Single-Clock Multi-Step `ALU`** | Avoids combinational Gray encode/decode LUT overhead (`2,253` vs `2,660` `LUT4`) | `bin3` |
